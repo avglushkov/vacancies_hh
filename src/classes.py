@@ -49,7 +49,7 @@ class Vacanse():
         self.employer = employer
         self.snippet = snippet
         if salary == None:
-            self.salary = {'from': 0, 'to': 0, "currency": "RUR", "gross": False}
+            self.salary = {'from': 0, 'to': 0, "currency": "RUR", "gross": True}
         else:
             self.salary = salary
 
@@ -101,7 +101,7 @@ class Vacansies_File():
                 added_position['id'] = vacancy['id']
                 added_position['name'] = vacancy['name']
                 added_position['url'] = vacancy['url']
-                added_position['address'] = vacancy['address']
+                added_position['address'] = (vacancy['address'])
                 added_position['salary'] = vacancy['salary']
                 added_position['employer'] = vacancy['employer']
                 added_position['snippet'] = vacancy['snippet']
