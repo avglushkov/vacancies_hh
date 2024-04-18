@@ -1,23 +1,40 @@
-
+import requests
+import json
+from src.classes import Vacanse
 
 def main_menu():
     """ функция выбора пункта основного меню """
-    print('Введите номер пункта меню:\n'
+    print('\nОсновное меню:\n'
           '1. Найти вакансию по ключевому слову\n'
           '2. Вывести ТОП N вакансий по ЗП\n'
           '3. Добавить новую вакансию\n'
           '4. Удалить вакансию')
 
-    selected_point = input('\n')
+    selected_point = int(input('Введите номер пункта меню: '))
     return selected_point
 
-def menu_search_word():
+def menu_search_params():
     """ функция выбора поиска вакансий по ключевому слову """
 
     search_word = input('Введите ключевое слово для поиска вакансии: ')
     vacancies_number = int(input('Введите количество вакансий в поиске: '))
 
     return [search_word, vacancies_number]
+
+def print_vacancies():
+    vacancies = []
+    with open('data/hh_vacancies_source.json', 'rt', encoding='utf-8') as source_file:
+        vacancies = json.load(source_file)
+
+    for vacancy in vacancies:
+        print(str(Vacanse(vacancy['id'],vacancy['name'],vacancy['url'],vacancy['salary'], vacancy['address'], vacancy['employer'], vacancy['snippet'])))
+
+
+def menu_top_salary(N):
+    """ Функция формирования перечня ТОП N вакансий по уровню ЗП"""
+    pass
+
+
 
 def menu_new_vacancy():
     """ функция вывода меню ввода новой вакансии """

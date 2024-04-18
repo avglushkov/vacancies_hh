@@ -15,10 +15,10 @@ class From_hh_api(Abs_APIVacancy):
     def __init__(self):
         self.api_url = 'https://api.hh.ru/vacancies'
 
-    def get_vacancies(self, search_text):
+    def get_vacancies(self, search_text, vacancies_number):
         """ метод позволяющий запрашивать записи с сайта hh, содержащие текст search_text и записывать его в файл в формате json """
 
-        response = requests.get(self.api_url, params={'text': search_text})
+        response = requests.get(self.api_url, params={'text': search_text, 'per_page': vacancies_number})
         print(response)
         print(response.status_code)
 
@@ -36,16 +36,16 @@ class Vacanse():
     name: str
     url: str
     salary: dict
-    address: str
+    aria: str
     employer: str
     snippet: dict
 
-    def __init__(self, id, name, url, salary, address, employer, snippet):
+    def __init__(self, id, name, url, salary, aria, employer, snippet):
 
         self.id = id
         self.name = name
         self.url = url
-        self.address = address
+        self.aria = aria
         self.employer = employer
         self.snippet = snippet
         if salary == None:
@@ -54,7 +54,11 @@ class Vacanse():
             self.salary = salary
 
     def __repr__(self):
-        return f'{self.id}, {self.name}, {self.url}, {self.salary}, {self.address},{self.employer},{self.snippet}'
+        return f'{self.id}, {self.name}, {self.url}, {self.salary}, {self.aria},{self.employer},{self.snippet}'
+
+    def __str__(self):
+
+        return f'{self.id}, {self.name} в "{self.employer['name']}" с ЗП от {self.salary['from']} до {self.salary['to']} {self.url}'
 
     def __le__(self, other):
         if self.salary['from'] <= other.salary['from']:
