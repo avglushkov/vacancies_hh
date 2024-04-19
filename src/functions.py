@@ -1,17 +1,39 @@
 import requests
 import json
-from src.classes import Vacanse
+from src.classes import Vacanse, Vacansies_File, From_hh_api
+
 
 def main_menu():
     """ функция выбора пункта основного меню """
-    print('\nОсновное меню:\n'
+
+    print('\nОСНОВНОЕ МЕНЮ:\n'
           '1. Найти вакансию по ключевому слову\n'
           '2. Вывести ТОП N вакансий по ЗП\n'
           '3. Добавить новую вакансию\n'
-          '4. Удалить вакансию')
+          '4. Удалить вакансию\n'
+          '5. Закончить работу')
 
     selected_point = int(input('Введите номер пункта меню: '))
-    return selected_point
+
+    if selected_point == 1:
+        menu_search_params()
+
+    elif selected_point == 2:
+        pass
+
+    elif selected_point== 3:
+        pass
+
+    elif selected_point == 4:
+        menu_remove_vacancy()
+
+    elif selected_point == 5:
+        print('Мы закончили. Пока!')
+
+    else:
+        print('В меню нет такого пункта')
+
+
 
 def menu_search_params():
     """ функция выбора поиска вакансий по ключевому слову """
@@ -19,11 +41,20 @@ def menu_search_params():
     search_word = input('Введите ключевое слово для поиска вакансии: ')
     vacancies_number = int(input('Введите количество вакансий в поиске: '))
 
-    return [search_word, vacancies_number]
+    hh_api = From_hh_api()
+    hh_api.get_vacancies(search_word, vacancies_number)
+    test_file = Vacansies_File('data/hh_vacancies_row.json',
+                               'data/hh_vacancies_source.json',
+                               'data/hh_vacancies_result.json')
+    test_file.from_row_file()
+    print_vacancies('data/hh_vacancies_source.json')
+    main_menu()
 
-def print_vacancies():
+
+def print_vacancies(file_to_print):
+    """ Функция вывода списка вакансий"""
     vacancies = []
-    with open('data/hh_vacancies_source.json', 'rt', encoding='utf-8') as source_file:
+    with open(file_to_print, 'rt', encoding='utf-8') as source_file:
         vacancies = json.load(source_file)
 
     for vacancy in vacancies:
@@ -34,6 +65,32 @@ def menu_top_salary(N):
     """ Функция формирования перечня ТОП N вакансий по уровню ЗП"""
     pass
 
+def menu_remove_vacancy():
+    """ Функция работы в меню удаления вакансии"""
+    print_vacancies('data/hh_vacancies_source.json')
+
+    id_to_remove = input('\nВведите ID вакансии, которую Вы хотите удалить из списка: ')
+    vacancies = []
+    id_list = []
+
+    with open('data/hh_vacancies_source.json', 'rt', encoding='utf-8') as source:
+        vacancies = json.load(source)
+
+        for vacancy in vacancies:
+            id_list.append(vacancy['id'])
+
+    if id_to_remove in id_list:
+        test_file = Vacansies_File('data/hh_vacancies_row.json',
+                                   'data/hh_vacancies_source.json',
+                                   'data/hh_vacancies_result.json')
+        test_file.remove_vacancy(id_to_remove)
+
+        print_vacancies('data/hh_vacancies_result.json')
+        main_menu()
+
+    else:
+        print('В списке нет вакансии с этим ID')
+        main_menu()
 
 
 def menu_new_vacancy():

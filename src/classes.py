@@ -40,12 +40,16 @@ class Vacanse():
     employer: str
     snippet: dict
 
-    def __init__(self, id, name, url, salary, aria, employer, snippet):
+    def __init__(self, id, name, url, salary, address, employer, snippet):
 
         self.id = id
         self.name = name
         self.url = url
-        self.aria = aria
+        if address == None:
+            self.address = {'city': '-'}
+        else:
+            self.address = address
+
         self.employer = employer
         self.snippet = snippet
         if salary == None:
@@ -54,11 +58,11 @@ class Vacanse():
             self.salary = salary
 
     def __repr__(self):
-        return f'{self.id}, {self.name}, {self.url}, {self.salary}, {self.aria},{self.employer},{self.snippet}'
+        return f'{self.id}, {self.name}, {self.url}, {self.salary}, {self.address},{self.employer},{self.snippet}'
 
     def __str__(self):
 
-        return f'{self.id}, {self.name} в "{self.employer['name']}" с ЗП от {self.salary['from']} до {self.salary['to']} {self.url}'
+        return f'{self.id}, {self.name} в "{self.employer['name']}" с ЗП от {self.salary['from']} до {self.salary['to']} в городе {self.address['city']} {self.url}'
 
     def __le__(self, other):
         if self.salary['from'] <= other.salary['from']:
@@ -163,8 +167,8 @@ class Vacansies_File():
                 if vacancy['id'] == str(vacancy_id):
                     vacancies.remove(vacancy)
 
-        with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
-            json.dump(vacancies, source_file, ensure_ascii=False)
+        with open(self.result_file_path, 'wt', encoding='utf-8') as result_file:
+            json.dump(vacancies, result_file, ensure_ascii=False)
 
     # vacancies = []
     #
