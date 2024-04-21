@@ -170,26 +170,50 @@ class Vacancies_File():
             json.dump(vacancies, source_file, ensure_ascii=False)
 
 
-    def get_vacancy_from_file(self,search_text, search_salary):
+    def filter_vacancy_by_word(self,search_text):
         """ Метод получения списка вакансий из файла, соответствующий введенным критериям"""
 
         vacancies_found = []
 
-        with open(self.source_file_path, 'rt', encoding='utf-8') as source_file:
-            vacancies = json.load(source_file)
+        with open(self.source_file_path, 'rt', encoding='utf-8') as file:
+            vacancies = json.load(file)
 
             for vacancy in vacancies:
-
                 #проверим наличие ключевого слова в кратком описании или описании обязанностей
                 if search_text.lower() in vacancy['name'].lower() or search_text.lower() in vacancy['snippet']['requirement'].lower() or search_text.lower() in vacancy['snippet']['responsibility'].lower():
+                    vacancies_found.append(vacancy)
 
-                    #проверим, что уровень ЗП превышает заданный порог
-                    if vacancy['salary']['from'] <= search_salary:
+        with open(self.source_file_path, 'wt', encoding='utf-8') as file:
+            json.dump(vacancies_found, file, ensure_ascii=False)
+
+    def filter_vacancy_by_city(self,search_city):
+        """ Метод получения списка вакансий из файла, соответствующий введенным критериям"""
+
+        vacancies_found = []
+
+        with open(self.source_file_path, 'rt', encoding='utf-8') as file:
+            vacancies = json.load(file)
+
+            for vacancy in vacancies:
+                if vacancy['address'] != None:
+                    if search_city.lower() == vacancy['address']['city'].lower():
                         vacancies_found.append(vacancy)
 
-        with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
-            json.dump(vacancies_found, source_file, ensure_ascii==False)
+        with open(self.source_file_path, 'wt', encoding='utf-8') as file:
+            json.dump(vacancies_found, file, ensure_ascii=False)
 
-        return vacancies_found
+    def filter_vacancy_by_salary(self,search_salary):
+        """ Метод получения списка вакансий из файла, соответствующий введенным критериям"""
 
+        vacancies_found = []
+
+        with open(self.source_file_path, 'rt', encoding='utf-8') as file:
+            vacancies = json.load(file)
+
+            for vacancy in vacancies:
+                if vacancy['salary']['from'] >= search_salary:
+                    vacancies_found.append(vacancy)
+
+        with open(self.source_file_path, 'wt', encoding='utf-8') as file:
+            json.dump(vacancies_found, file, ensure_ascii=False)
 

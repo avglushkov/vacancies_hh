@@ -10,11 +10,13 @@ def main_menu():
     source_file_path = 'data/hh_vacancies_source.json'
 
     print('\nОСНОВНОЕ МЕНЮ:\n'
-          '1. Найти вакансию по ключевому слову\n'
+          '1. Загрузить вакансии с сайта\n'
           '2. Отсортировать вакансий по ЗП\n'
-          '3. Добавить новую вакансию\n'
-          '4. Удалить вакансию\n'
-          '5. Закончить работу')
+          '3. Отфильтровать вакансии по городу\n'
+          '4. Отфильтровать вакансии по ключевому слову\n'          
+          '5. Добавить новую вакансию\n'
+          '6. Удалить вакансию\n'
+          '7. Закончить работу')
 
     selected_point = int(input('Введите номер пункта меню: '))
 
@@ -25,12 +27,20 @@ def main_menu():
         menu_top_salary(raw_file_path , source_file_path)
 
     elif selected_point== 3:
+        menu_filter_by_city(raw_file_path , source_file_path)
+
+    elif selected_point== 4:
+        menu_filter_by_word(raw_file_path , source_file_path)
+
+    elif selected_point== 5:
         menu_new_vacancy(raw_file_path , source_file_path)
 
-    elif selected_point == 4:
-        menu_remove_vacancy(raw_file_path , source_file_path)
+    elif selected_point == 6:
+        print_vacancies(source_file_path)
+        id_to_remove = input('\nВведите ID вакансии, которую Вы хотите удалить из списка: ')
+        menu_remove_vacancy(raw_file_path , source_file_path, id_to_remove)
 
-    elif selected_point == 5:
+    elif selected_point == 7:
         print('Мы закончили. Пока!')
 
     else:
@@ -48,20 +58,21 @@ def print_vacancies(file_to_print):
 
 
 def menu_search_params(raw_file_path, source_file_path):
-    """ функция выбора поиска вакансий по ключевому слову """
+    """ функция загрузки вакансий по ключевому слову с указанием количества"""
 
-    search_word = input('Введите ключевое слово для поиска вакансии: ')
+    search_word = input('Введите ключевое слово для поиска вакансий: ')
     vacancies_number = int(input('Введите количество вакансий в поиске: '))
 
     hh_api = From_hh_api()
     hh_api.get_vacancies(search_word, vacancies_number)
-    test_file = Vacancies_File(raw_file_path, source_file_path)
-    test_file.from_raw_file()
+
+    file = Vacancies_File(raw_file_path, source_file_path)
+    file.from_raw_file()
     print_vacancies(source_file_path)
     main_menu()
 
 def menu_top_salary(raw_file_path, source_file_path):
-    """ Функция формирования перечня ТОП N вакансий по уровню ЗП """
+    """ Функция сортировки вакансия по уровню ЗП """
 
     sorting_file = Vacancies_File(raw_file_path, source_file_path)
     sorting_file.sort_vacancy()
@@ -70,13 +81,34 @@ def menu_top_salary(raw_file_path, source_file_path):
     print_vacancies(source_file_path)
     main_menu()
 
-def menu_remove_vacancy(raw_file_path, source_file_path):
-    """ Функция работы в меню удаления вакансии """
+def menu_filter_by_city(raw_file_path , source_file_path):
+    """ Функция фильтрации вакансий по названию города"""
+
+    search_word = input('Введите город: ')
+
+    filtered_file = Vacancies_File(raw_file_path, source_file_path)
+    filtered_file.filter_vacancy_by_city(search_word)
 
     print_vacancies(source_file_path)
+    main_menu()
 
-    id_to_remove = input('\nВведите ID вакансии, которую Вы хотите удалить из списка: ')
+def menu_filter_by_word(raw_file_path , source_file_path):
+    """ Функция фильтрации вакансий по ключевому слову"""
+
+    search_word = input('Слово для поиска: ')
+
+    filtered_file = Vacancies_File(raw_file_path, source_file_path)
+    filtered_file.filter_vacancy_by_word(search_word)
+
+    print_vacancies(source_file_path)
+    main_menu()
+
+def menu_remove_vacancy(raw_file_path, source_file_path, id_to_remove):
+    """ Функция работы в меню удаления вакансии """
+    #
+    # id_to_remove = input('\nВведите ID вакансии, которую Вы хотите удалить из списка: ')
     vacancies = []
+    vacancies_result = []
     id_list = []
 
     with open(source_file_path, 'rt', encoding='utf-8') as source:
@@ -86,8 +118,8 @@ def menu_remove_vacancy(raw_file_path, source_file_path):
             id_list.append(vacancy['id'])
 
     if id_to_remove in id_list:
-        result_file = Vacancies_File(raw_file_path, source_file_path)
-        result_file.remove_vacancy(id_to_remove)
+        file = Vacancies_File(raw_file_path, source_file_path)
+        file.remove_vacancy(id_to_remove)
 
         print_vacancies(source_file_path)
         main_menu()
@@ -146,12 +178,12 @@ def menu_new_vacancy(raw_file_path, source_file_path):
                 break
 
     vacancy_employer_name = input('Введите название компании: ')
-    vacancy_snippet_requirements = input('Введите ключевые требования: ')
+    vacancy_snippet_requirement = input('Введите ключевые требования: ')
     vacancy_snippet_responsibility = input('Введите описание ответственности: ')
 
     # Собираем словари
     vacancy_salary = {'from': vacancy_salary_from, 'to': vacancy_salary_to, 'currancy': 'RUR', "gross": True}
-    vacancy_snippet = {'requirements': vacancy_snippet_requirements,
+    vacancy_snippet = {'requirement': vacancy_snippet_requirement,
                        'responsibility': vacancy_snippet_responsibility}
     vacancy_address = {'city': vacancy_address_city}
     vacancy_employer = {'name': vacancy_employer_name}
@@ -159,8 +191,8 @@ def menu_new_vacancy(raw_file_path, source_file_path):
     # новая вакансия должна быть экземпляром класса Vacancy
     new_vacancy = Vacancy(vacancy_id,vacancy_name,vacancy_url,vacancy_salary,vacancy_address,vacancy_employer,vacancy_snippet)
 
-    adding_file = Vacancies_File(raw_file_path, source_file_path)
-    adding_file.add_vacancy(new_vacancy)
+    file = Vacancies_File(raw_file_path, source_file_path)
+    file.add_vacancy(new_vacancy)
 
     print_vacancies(source_file_path)
     main_menu()
