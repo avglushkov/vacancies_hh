@@ -1,17 +1,17 @@
 import requests
 import json
-from src.classes import Vacance, Vacancies_File, From_hh_api
+from src.classes import Vacancy, Vacancies_File, From_hh_api
 
 
 def main_menu():
     """ функция выбора пункта основного меню """
 
-    row_file_path = 'data/hh_vacancies_row.json'
+    raw_file_path = 'data/hh_vacancies_raw.json'
     source_file_path = 'data/hh_vacancies_source.json'
 
     print('\nОСНОВНОЕ МЕНЮ:\n'
           '1. Найти вакансию по ключевому слову\n'
-          '2. Вывести ТОП N вакансий по ЗП\n'
+          '2. Отсортировать вакансий по ЗП\n'
           '3. Добавить новую вакансию\n'
           '4. Удалить вакансию\n'
           '5. Закончить работу')
@@ -19,16 +19,16 @@ def main_menu():
     selected_point = int(input('Введите номер пункта меню: '))
 
     if selected_point == 1:
-        menu_search_params(row_file_path , source_file_path)
+        menu_search_params(raw_file_path, source_file_path)
 
     elif selected_point == 2:
-        menu_top_salary(row_file_path , source_file_path)
+        menu_top_salary(raw_file_path , source_file_path)
 
     elif selected_point== 3:
-        menu_new_vacancy(row_file_path , source_file_path)
+        menu_new_vacancy(raw_file_path , source_file_path)
 
     elif selected_point == 4:
-        menu_remove_vacancy(row_file_path , source_file_path)
+        menu_remove_vacancy(raw_file_path , source_file_path)
 
     elif selected_point == 5:
         print('Мы закончили. Пока!')
@@ -44,10 +44,10 @@ def print_vacancies(file_to_print):
         vacancies = json.load(source_file)
 
     for vacancy in vacancies:
-        print(str(Vacance(vacancy['id'],vacancy['name'],vacancy['url'],vacancy['salary'], vacancy['address'], vacancy['employer'], vacancy['snippet'])))
+        print(str(Vacancy(vacancy['id'],vacancy['name'],vacancy['url'],vacancy['salary'], vacancy['address'], vacancy['employer'], vacancy['snippet'])))
 
 
-def menu_search_params(row_file_path, source_file_path):
+def menu_search_params(raw_file_path, source_file_path):
     """ функция выбора поиска вакансий по ключевому слову """
 
     search_word = input('Введите ключевое слово для поиска вакансии: ')
@@ -55,22 +55,22 @@ def menu_search_params(row_file_path, source_file_path):
 
     hh_api = From_hh_api()
     hh_api.get_vacancies(search_word, vacancies_number)
-    test_file = Vacancies_File(row_file_path, source_file_path)
-    test_file.from_row_file()
+    test_file = Vacancies_File(raw_file_path, source_file_path)
+    test_file.from_raw_file()
     print_vacancies(source_file_path)
     main_menu()
 
-def menu_top_salary(row_file_path, source_file_path):
+def menu_top_salary(raw_file_path, source_file_path):
     """ Функция формирования перечня ТОП N вакансий по уровню ЗП """
 
-    sorting_file = Vacancies_File(row_file_path, source_file_path)
+    sorting_file = Vacancies_File(raw_file_path, source_file_path)
     sorting_file.sort_vacancy()
     print('\nВакансии отсортированные по максимальному уровню нижнего уровня ЗП:')
 
     print_vacancies(source_file_path)
     main_menu()
 
-def menu_remove_vacancy(row_file_path, source_file_path):
+def menu_remove_vacancy(raw_file_path, source_file_path):
     """ Функция работы в меню удаления вакансии """
 
     print_vacancies(source_file_path)
@@ -86,7 +86,7 @@ def menu_remove_vacancy(row_file_path, source_file_path):
             id_list.append(vacancy['id'])
 
     if id_to_remove in id_list:
-        result_file = Vacancies_File(row_file_path, source_file_path)
+        result_file = Vacancies_File(raw_file_path, source_file_path)
         result_file.remove_vacancy(id_to_remove)
 
         print_vacancies(source_file_path)
@@ -97,7 +97,7 @@ def menu_remove_vacancy(row_file_path, source_file_path):
         main_menu()
 
 
-def menu_new_vacancy(row_file_path, source_file_path):
+def menu_new_vacancy(raw_file_path, source_file_path):
     """ функция вывода меню ввода новой вакансии """
 
     new_vacancy = {}
@@ -156,10 +156,10 @@ def menu_new_vacancy(row_file_path, source_file_path):
     vacancy_address = {'city': vacancy_address_city}
     vacancy_employer = {'name': vacancy_employer_name}
 
-    # новая вакансия должна быть экземпляром класса Vacance
-    new_vacancy = Vacance(vacancy_id,vacancy_name,vacancy_url,vacancy_salary,vacancy_address,vacancy_employer,vacancy_snippet)
+    # новая вакансия должна быть экземпляром класса Vacancy
+    new_vacancy = Vacancy(vacancy_id,vacancy_name,vacancy_url,vacancy_salary,vacancy_address,vacancy_employer,vacancy_snippet)
 
-    adding_file = Vacancies_File(row_file_path, source_file_path)
+    adding_file = Vacancies_File(raw_file_path, source_file_path)
     adding_file.add_vacancy(new_vacancy)
 
     print_vacancies(source_file_path)

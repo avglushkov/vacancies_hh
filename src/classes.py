@@ -25,11 +25,11 @@ class From_hh_api(Abs_APIVacancy):
         print(response.status_code)
 
         vacancies = response.json()
-        with open('data/hh_vacancies_row.json', 'wt', encoding='utf-8') as data_file:
+        with open('data/hh_vacancies_raw.json', 'wt', encoding='utf-8') as data_file:
             json.dump(vacancies['items'], data_file, ensure_ascii=False)
 
 
-class Vacance():
+class Vacancy():
     """класс объекта Вакансия"""
 
     id: int
@@ -78,19 +78,18 @@ class Vacance():
 
 class Vacancies_File():
 
-    def __init__(self, row_file_path, source_file_path):
+    def __init__(self, raw_file_path, source_file_path):
 
-        self.row_file_path = row_file_path
+        self.raw_file_path = raw_file_path
         self.source_file_path = source_file_path
 
-
-    def from_row_file(self):
+    def from_raw_file(self):
         """  метод, который позволяет из исходного файла, полученного импортом с сайта hh.ru, получить файл в котором записи вакансий добавляются в формате класса Vacancy"""
 
         vacancies_to_source = []
 
-        with open(self.row_file_path, 'rt', encoding='utf-8') as row_file:
-            vacancies = json.load(row_file)
+        with open(self.raw_file_path, 'rt', encoding='utf-8') as raw_file:
+            vacancies = json.load(raw_file)
 
             for vacancy in vacancies:
                 added_position = {}
@@ -116,7 +115,7 @@ class Vacancies_File():
         """ Метод записи новой вакании в итоговый файл"""
 
         # Проверим соответствует ли новая вакансия формату класса Vacanse
-        if issubclass(type(new_vacancy), Vacance):
+        if issubclass(type(new_vacancy), Vacancy):
 
             vacansies = []
             new_vacancy = {'id': new_vacancy.id,
@@ -133,9 +132,7 @@ class Vacancies_File():
             with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
                 vacancies.append(new_vacancy)
                 json.dump(vacancies, source_file, ensure_ascii=False)
-            # with open(self.result_file_path, 'wt', encoding='utf-8') as source_file:
-            #     vacancies.append(new_vacancy)
-            #     json.dump(vacancies, source_file, ensure_ascii=False)
+
 
         else:
             raise ValueError('Вы добавляете вакансию некорректного формата')
@@ -149,8 +146,6 @@ class Vacancies_File():
                 if vacancy['id'] == str(vacancy_id):
                     vacancies.remove(vacancy)
 
-        # with open(self.result_file_path, 'wt', encoding='utf-8') as result_file:
-        #     json.dump(vacancies, result_file, ensure_ascii=False)
         with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
             json.dump(vacancies, source_file, ensure_ascii=False)
 
@@ -171,9 +166,6 @@ class Vacancies_File():
 
         vacancies.sort(key=lambda e: e['salary']['from'], reverse=True)
 
-
-        # with open(self.result_file_path, 'wt', encoding='utf-8') as result_file:
-        #     json.dump(vacancies, result_file, ensure_ascii=False)
         with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
             json.dump(vacancies, source_file, ensure_ascii=False)
 
@@ -195,8 +187,6 @@ class Vacancies_File():
                     if vacancy['salary']['from'] <= search_salary:
                         vacancies_found.append(vacancy)
 
-        # with open(self.result_file_path, 'wt', encoding='utf-8') as result_file:
-        #     json.dump(vacancies_found, result_file, ensure_ascii==False)
         with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
             json.dump(vacancies_found, source_file, ensure_ascii==False)
 
