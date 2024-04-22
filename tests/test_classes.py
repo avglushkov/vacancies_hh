@@ -3,6 +3,18 @@ from src.classes import From_hh_api,Vacancy,Vacancies_File
 import pytest
 import json
 
+
+def test_head_hunter_api():
+    """проверяем работоспособность загрузки данных с сайта и записи в файл"""
+
+    get_api = From_hh_api()
+    get_api.get_vacancies('agile', 3)
+
+    with open('data/hh_vacancies_raw.json', 'rt', encoding='utf-8') as file:
+        vacancies = json.load(file)
+
+    assert len(vacancies) == 3
+
 @pytest.fixture()
 def vacancy_1():
     return Vacancy('97228248'
@@ -53,7 +65,7 @@ def test_file_json():
              'area': {'id': '160', 'name': 'Алматы', 'url': 'https://api.hh.ru/areas/160'},
              'salary': {'from': 100000, 'to': 110000, 'currency': 'KZT', 'gross': False},
              'type': {'id': 'open', 'name': 'Открытая'},
-             'address': None, 'response_url': None, 'sort_point_distance': None,
+             'address': {'city': 'Москва'}, 'response_url': None, 'sort_point_distance': None,
              'published_at': '2024-04-19T12:32:07+0300', 'created_at': '2024-04-19T12:32:07+0300', 'archived': False,
              'apply_alternate_url': 'https://hh.ru/applicant/vacancy_response?vacancyId=97420684',
              'insider_interview': None, 'url': 'https://api.hh.ru/vacancies/97420684?host=hh.ru',
@@ -132,10 +144,32 @@ def test_sort_vacancy(test_file_json):
     """ проверяем корректность работы метода sort_vacancy класса Vacancies_File """
 
     test_file_json = Vacancies_File('test_data.json', 'test_data.json')
-    test_file_json.sort_vacancy()
+    test_file_json.sort_vacancy(2)
     with open('test_data.json', 'rt', encoding='utf-8') as file:
         vacancies = json.load(file)
 
     assert len(vacancies) == 2
     assert vacancies[0]['id'] == '97455477'
     assert vacancies[1]['id'] == '97420684'
+
+def test_filter_vacancy_by_city_1(test_file_json):
+    """ проверяем корректность работы метода filter_vacancy_by_city класса Vacancies_File """
+
+    test_file_json = Vacancies_File('test_data.json','test_data.json')
+    test_file_json.filter_vacancy_by_city('Москва')
+    with open('test_data.json', 'rt', encoding='utf-8') as file:
+        vacancies = json.load(file)
+
+    assert len(vacancies) == 1
+    assert vacancies[0]['id'] == '97420684'
+def test_filter_vacancy_by_city_2(test_file_json):
+    """ проверяем корректность работы метода filter_vacancy_by_city класса Vacancies_File """
+
+    test_file_json = Vacancies_File('test_data.json','test_data.json')
+    test_file_json.filter_vacancy_by_city('Нью-Йорк')
+    with open('test_data.json', 'rt', encoding='utf-8') as file:
+        vacancies = json.load(file)
+
+    assert len(vacancies) == 2
+    assert vacancies[0]['id'] == '97420684'
+    assert vacancies[1]['id'] == '97455477'
