@@ -11,7 +11,6 @@ class Abs_APIVacancy(ABC):
     def __init__(self):
         pass
 
-
 class From_hh_api(Abs_APIVacancy):
     """ Класс для запроса данных с сайта hh.ru """
 
