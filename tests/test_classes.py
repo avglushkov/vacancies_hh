@@ -173,3 +173,26 @@ def test_filter_vacancy_by_city_2(test_file_json):
     assert len(vacancies) == 2
     assert vacancies[0]['id'] == '97420684'
     assert vacancies[1]['id'] == '97455477'
+
+def test_filter_vacancy_by_word_1(test_file_json):
+    """ проверяем корректность работы метода filter_vacancy_by_word класса Vacancies_File """
+
+    test_file_json = Vacancies_File('test_data.json','test_data.json')
+    test_file_json.filter_vacancy_by_word('пыль')
+    with open('test_data.json', 'rt', encoding='utf-8') as file:
+        vacancies = json.load(file)
+
+    assert len(vacancies) == 1
+    assert vacancies[0]['id'] == '97420684'
+
+def test_filter_vacancy_by_word_2(test_file_json):
+    """ проверяем корректность работы метода filter_vacancy_by_word класса Vacancies_File """
+
+    test_file_json = Vacancies_File('test_data.json','test_data.json')
+    test_file_json.filter_vacancy_by_word('DevOps')
+    with open('test_data.json', 'rt', encoding='utf-8') as file:
+        vacancies = json.load(file)
+
+    assert len(vacancies) == 2
+    assert vacancies[0]['id'] == '97420684'
+    assert vacancies[1]['id'] == '97455477'

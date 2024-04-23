@@ -1,5 +1,6 @@
 import requests
 import json
+import re
 
 from abc import ABC, abstractmethod
 from operator import itemgetter
@@ -208,7 +209,7 @@ class Vacancies_File():
                     json.dump(vacancies_found, file, ensure_ascii=False)
 
             else:
-                print(f'В городе {search_city} вакансий не найдено')
+                print(f'В городе {search_city} вакансий не найдено\n')
                 with open(self.source_file_path, 'wt', encoding='utf-8') as file:
                     json.dump(vacancies, file, ensure_ascii=False)
 
@@ -220,15 +221,51 @@ class Vacancies_File():
         with open(self.source_file_path, 'rt', encoding='utf-8') as file:
             vacancies = json.load(file)
 
+
         for vacancy in vacancies:
-            if (search_word.lower() in vacancy['name'].lower()) or (search_word.lower() in vacancy['snippet']['requirement'].lower()) or (search_word.lower() in vacancy['snippet']['responsibility'].lower()):
+            # Если требования или ответственность не заполены, то заполняем их заглушками
+            if vacancy['snippet']['requirement'] == None:
+                vacancy['snippet']['requirement'] = 'Требования'
+
+            if vacancy['snippet']['responsibility'] == None:
+                vacancy['snippet']['responsibility'] = 'Ответственность'
+
+            vacancy_name = vacancy['name'].lower()
+            vacancy_requirement = vacancy['snippet']['requirement'].lower()
+            vacancy_responsibility = vacancy['snippet']['responsibility'].lower()
+
+            # очищаем текст от знаков
+            symbols_to_remove = ",!?."
+            for symbol in symbols_to_remove:
+                vacancy_name = vacancy_name.replace(symbol, "")
+                vacancy_responsibility = vacancy_responsibility.replace(symbol, "")
+                vacancy_requirement = vacancy_requirement.replace(symbol, "")
+
+            add_name = vacancy_name.split()
+            add_requirement = vacancy_requirement.split()
+            add_responsibility = vacancy_responsibility.split()
+
+            # собираем текст краткого наименования, требований и ответственности в список слов для проверки
+            words_list = []
+
+            for m in add_name:
+                words_list.append(m)
+            for i in add_requirement:
+                words_list.append(i)
+            for j in add_responsibility:
+                words_list.append(j)
+
+            # проверяем соответствие слова для поиска тексту вакансии
+            if search_word.lower() in words_list:
                 vacancies_found.append(vacancy)
 
-            else:
-                print(f'Вакании, содержащте ключевое слово {search_word} не найдены')
-                vacancies_found = vacancies
 
-        with open(self.source_file_path, 'wt', encoding='utf-8') as file:
+        if len(vacancies_found) == 0:
+            print(f'Вакании, содержащте ключевое слово {search_word} не найдены\n'
+                  f'Попробуйте запустить поиск снова\n')
+
+        else:
+            with open(self.source_file_path, 'wt', encoding='utf-8') as file:
                 json.dump(vacancies_found, file, ensure_ascii=False)
 
 
