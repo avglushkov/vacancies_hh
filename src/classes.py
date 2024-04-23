@@ -1,5 +1,6 @@
 import requests
 import json
+import re
 
 from abc import ABC, abstractmethod
 from operator import itemgetter
@@ -25,11 +26,11 @@ class From_hh_api(Abs_APIVacancy):
         print(response.status_code)
 
         vacancies = response.json()
-        with open('data/hh_vacancies_row.json', 'wt', encoding='utf-8') as data_file:
+        with open('data/hh_vacancies_raw.json', 'wt', encoding='utf-8') as data_file:
             json.dump(vacancies['items'], data_file, ensure_ascii=False)
 
 
-class Vacance():
+class Vacancy():
     """класс объекта Вакансия"""
 
     id: int
@@ -62,7 +63,7 @@ class Vacance():
 
     def __str__(self):
 
-        return f'{self.id}, {self.name} в "{self.employer['name']}" с доходом от {self.salary['from']} до {self.salary['to']} в городе {self.address['city']}. Ссылка: {self.url}'
+        return f'{self.id}, {self.name} в "{self.employer['name']}" с доходом от {self.salary['from']} до {self.salary['to']} в городе {self.address['city']}. Ссылка: {self.url}. Требования: {self.snippet['requirement']}'
 
     def __le__(self, other):
         if self.salary['from'] <= other.salary['from']:
@@ -78,19 +79,18 @@ class Vacance():
 
 class Vacancies_File():
 
-    def __init__(self, row_file_path, source_file_path):
+    def __init__(self, raw_file_path, source_file_path):
 
-        self.row_file_path = row_file_path
+        self.raw_file_path = raw_file_path
         self.source_file_path = source_file_path
 
-
-    def from_row_file(self):
+    def from_raw_file(self):
         """  метод, который позволяет из исходного файла, полученного импортом с сайта hh.ru, получить файл в котором записи вакансий добавляются в формате класса Vacancy"""
 
         vacancies_to_source = []
 
-        with open(self.row_file_path, 'rt', encoding='utf-8') as row_file:
-            vacancies = json.load(row_file)
+        with open(self.raw_file_path, 'rt', encoding='utf-8') as raw_file:
+            vacancies = json.load(raw_file)
 
             for vacancy in vacancies:
                 added_position = {}
@@ -116,7 +116,7 @@ class Vacancies_File():
         """ Метод записи новой вакании в итоговый файл"""
 
         # Проверим соответствует ли новая вакансия формату класса Vacanse
-        if issubclass(type(new_vacancy), Vacance):
+        if issubclass(type(new_vacancy), Vacancy):
 
             vacansies = []
             new_vacancy = {'id': new_vacancy.id,
@@ -133,31 +133,41 @@ class Vacancies_File():
             with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
                 vacancies.append(new_vacancy)
                 json.dump(vacancies, source_file, ensure_ascii=False)
-            # with open(self.result_file_path, 'wt', encoding='utf-8') as source_file:
-            #     vacancies.append(new_vacancy)
-            #     json.dump(vacancies, source_file, ensure_ascii=False)
+
 
         else:
             raise ValueError('Вы добавляете вакансию некорректного формата')
 
     def remove_vacancy(self, vacancy_id):
-        """ Метод для удаления выкансии по нужному ID из файла с ваканчиями"""
+        """ Метод для удаления выкансии по нужному ID из файла с ваканcиями"""
+
+        id_list = []
 
         with open(self.source_file_path, 'rt', encoding='utf-8') as source_file:
             vacancies = json.load(source_file)
+
             for vacancy in vacancies:
-                if vacancy['id'] == str(vacancy_id):
-                    vacancies.remove(vacancy)
+                id_list.append(vacancy['id'])
 
-        # with open(self.result_file_path, 'wt', encoding='utf-8') as result_file:
-        #     json.dump(vacancies, result_file, ensure_ascii=False)
-        with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
-            json.dump(vacancies, source_file, ensure_ascii=False)
+            if vacancy_id in id_list:
+                for vacancy in vacancies:
+                    if vacancy['id'] == str(vacancy_id):
+                        vacancies.remove(vacancy)
+                        print(f'Вакансия {vacancy['id']} удалена из списка')
 
-    def sort_vacancy(self):
+
+                with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
+                    json.dump(vacancies, source_file, ensure_ascii=False)
+            else:
+                print(f'Вакансии с ID {vacancy_id} нет в списке')
+                with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
+                    json.dump(vacancies, source_file, ensure_ascii=False)
+
+    def sort_vacancy(self, top_number):
         """ Метод сортировки вакансий в файле"""
 
         vacancies = []
+        top_vacancies = []
 
         with open(self.source_file_path, 'rt', encoding='utf-8') as source_file:
             vacancies = json.load(source_file)
@@ -171,35 +181,94 @@ class Vacancies_File():
 
         vacancies.sort(key=lambda e: e['salary']['from'], reverse=True)
 
+        top_vacancies = vacancies[0 : top_number]
 
-        # with open(self.result_file_path, 'wt', encoding='utf-8') as result_file:
-        #     json.dump(vacancies, result_file, ensure_ascii=False)
         with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
-            json.dump(vacancies, source_file, ensure_ascii=False)
+            json.dump(top_vacancies, source_file, ensure_ascii=False)
 
 
-    def get_vacancy_from_file(self,search_text, search_salary):
+    def filter_vacancy_by_city(self,search_city):
+        """ Метод получения списка вакансий из файла, соответствующий введенным критериям"""
+
+        vacancies_found = []
+        cities_list = []
+
+        with open(self.source_file_path, 'rt', encoding='utf-8') as file:
+            vacancies = json.load(file)
+
+            for vacancy in vacancies:
+                if vacancy['address'] != None:
+                    cities_list.append(vacancy['address']['city'])
+
+            if search_city in cities_list:
+                for vacancy in vacancies:
+                    if vacancy['address'] != None:
+                        if search_city == vacancy['address']['city']:
+                            vacancies_found.append(vacancy)
+                with open(self.source_file_path, 'wt', encoding='utf-8') as file:
+                    json.dump(vacancies_found, file, ensure_ascii=False)
+
+            else:
+                print(f'В городе {search_city} вакансий не найдено\n')
+                with open(self.source_file_path, 'wt', encoding='utf-8') as file:
+                    json.dump(vacancies, file, ensure_ascii=False)
+
+    def filter_vacancy_by_word(self,search_word):
         """ Метод получения списка вакансий из файла, соответствующий введенным критериям"""
 
         vacancies_found = []
 
-        with open(self.source_file_path, 'rt', encoding='utf-8') as source_file:
-            vacancies = json.load(source_file)
+        with open(self.source_file_path, 'rt', encoding='utf-8') as file:
+            vacancies = json.load(file)
 
-            for vacancy in vacancies:
 
-                #проверим наличие ключевого слова в кратком описании или описании обязанностей
-                if search_text.lower() in vacancy['name'].lower() or search_text.lower() in vacancy['snippet']['requirement'].lower() or search_text.lower() in vacancy['snippet']['responsibility'].lower():
+        for vacancy in vacancies:
+            # Если требования или ответственность не заполены, то заполняем их заглушками
+            if vacancy['snippet']['requirement'] == None:
+                vacancy['snippet']['requirement'] = 'Требования'
 
-                    #проверим, что уровень ЗП превышает заданный порог
-                    if vacancy['salary']['from'] <= search_salary:
-                        vacancies_found.append(vacancy)
+            if vacancy['snippet']['responsibility'] == None:
+                vacancy['snippet']['responsibility'] = 'Ответственность'
 
-        # with open(self.result_file_path, 'wt', encoding='utf-8') as result_file:
-        #     json.dump(vacancies_found, result_file, ensure_ascii==False)
-        with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
-            json.dump(vacancies_found, source_file, ensure_ascii==False)
+            vacancy_name = vacancy['name'].lower()
+            vacancy_requirement = vacancy['snippet']['requirement'].lower()
+            vacancy_responsibility = vacancy['snippet']['responsibility'].lower()
 
-        return vacancies_found
+            # очищаем текст от знаков
+            symbols_to_remove = ",!?."
+            for symbol in symbols_to_remove:
+                vacancy_name = vacancy_name.replace(symbol, "")
+                vacancy_responsibility = vacancy_responsibility.replace(symbol, "")
+                vacancy_requirement = vacancy_requirement.replace(symbol, "")
+
+            add_name = vacancy_name.split()
+            add_requirement = vacancy_requirement.split()
+            add_responsibility = vacancy_responsibility.split()
+
+            # собираем текст краткого наименования, требований и ответственности в список слов для проверки
+            words_list = []
+
+            for m in add_name:
+                words_list.append(m)
+            for i in add_requirement:
+                words_list.append(i)
+            for j in add_responsibility:
+                words_list.append(j)
+
+            # проверяем соответствие слова для поиска тексту вакансии
+            if search_word.lower() in words_list:
+                vacancies_found.append(vacancy)
+
+
+        if len(vacancies_found) == 0:
+            print(f'Вакании, содержащте ключевое слово {search_word} не найдены\n'
+                  f'Попробуйте запустить поиск снова\n')
+
+        else:
+            with open(self.source_file_path, 'wt', encoding='utf-8') as file:
+                json.dump(vacancies_found, file, ensure_ascii=False)
+
+
+
 
 
