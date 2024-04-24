@@ -1,23 +1,24 @@
-import requests
 import json
+import requests
 import re
 
 from abc import ABC, abstractmethod
+from typing import Any
 from operator import itemgetter
 
 class Abs_APIVacancy(ABC):
     """ Абстрактный класс для одъектов класса вакансия и его наследников """
     @abstractmethod
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 class From_hh_api(Abs_APIVacancy):
     """ Класс для запроса данных с сайта hh.ru """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_url = 'https://api.hh.ru/vacancies'
 
-    def get_vacancies(self, search_text, vacancies_number):
+    def get_vacancies(self, search_text, vacancies_number) -> None:
         """ метод позволяющий запрашивать записи с сайта hh, содержащие текст search_text и записывать его в файл в формате json """
 
         response = requests.get(self.api_url, params={'text': search_text, 'per_page': vacancies_number})
@@ -25,6 +26,7 @@ class From_hh_api(Abs_APIVacancy):
         print(response.status_code)
 
         vacancies = response.json()
+
         with open('data/hh_vacancies_raw.json', 'wt', encoding='utf-8') as data_file:
             json.dump(vacancies['items'], data_file, ensure_ascii=False)
 
@@ -40,7 +42,7 @@ class Vacancy():
     employer: dict
     snippet: dict
 
-    def __init__(self, id, name, url, salary, address, employer, snippet):
+    def __init__(self, id, name, url, salary, address, employer, snippet) -> None:
 
         self.id = id
         self.name = name
@@ -57,34 +59,41 @@ class Vacancy():
         else:
             self.salary = salary
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.id}, {self.name}, {self.url}, {self.salary}, {self.address},{self.employer},{self.snippet}'
 
-    def __str__(self):
+    def __str__(self) -> str:
 
         return f'{self.id}, {self.name} в "{self.employer['name']}" с доходом от {self.salary['from']} до {self.salary['to']} в городе {self.address['city']}. Ссылка: {self.url}. Требования: {self.snippet['requirement']}'
 
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
         if self.salary['from'] <= other.salary['from']:
             return True
         else:
             return False
-    def __ge__(self, other):
+    def __ge__(self, other) -> bool:
 
         if self.salary['from'] >= other.salary['from']:
             return True
         else:
             return False
 
+class Abs_Vacancies_File(ABC):
+    """ Абстрактный класс для одъектов класса взаимодействия с файлами """
+    @abstractmethod
+    def __init__(self) -> None:
+        pass
+
 class Vacancies_File():
 
-    def __init__(self, raw_file_path, source_file_path):
+    def __init__(self, raw_file_path, source_file_path) -> None:
 
         self.raw_file_path = raw_file_path
         self.source_file_path = source_file_path
 
-    def from_raw_file(self):
-        """  метод, который позволяет из исходного файла, полученного импортом с сайта hh.ru, получить файл в котором записи вакансий добавляются в формате класса Vacancy"""
+    def from_raw_file(self) -> None:
+        """  метод, который позволяет из исходного файла, полученного импортом с сайта hh.ru,
+        получить файл в котором записи вакансий добавляются в формате класса Vacancy"""
 
         vacancies_to_source = []
 
@@ -111,13 +120,12 @@ class Vacancies_File():
         with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
             json.dump(vacancies_to_source, source_file, ensure_ascii=False)
 
-    def add_vacancy(self, new_vacancy):
+    def add_vacancy(self, new_vacancy) -> None:
         """ Метод записи новой вакании в итоговый файл"""
 
         # Проверим соответствует ли новая вакансия формату класса Vacanse
         if issubclass(type(new_vacancy), Vacancy):
-
-            vacansies = []
+            vacansies: list
             new_vacancy = {'id': new_vacancy.id,
                            'name': new_vacancy.name,
                            'url': new_vacancy.url,
@@ -133,11 +141,10 @@ class Vacancies_File():
                 vacancies.append(new_vacancy)
                 json.dump(vacancies, source_file, ensure_ascii=False)
 
-
         else:
             raise ValueError('Вы добавляете вакансию некорректного формата')
 
-    def remove_vacancy(self, vacancy_id):
+    def remove_vacancy(self, vacancy_id) -> None:
         """ Метод для удаления выкансии по нужному ID из файла с ваканcиями"""
 
         id_list = []
@@ -162,7 +169,7 @@ class Vacancies_File():
                 with open(self.source_file_path, 'wt', encoding='utf-8') as source_file:
                     json.dump(vacancies, source_file, ensure_ascii=False)
 
-    def sort_vacancy(self, top_number):
+    def sort_vacancy(self, top_number) -> None:
         """ Метод сортировки вакансий в файле"""
 
         vacancies = []
@@ -186,7 +193,7 @@ class Vacancies_File():
             json.dump(top_vacancies, source_file, ensure_ascii=False)
 
 
-    def filter_vacancy_by_city(self,search_city):
+    def filter_vacancy_by_city(self,search_city) -> None:
         """ Метод получения списка вакансий из файла, соответствующий введенным критериям"""
 
         vacancies_found = []
@@ -212,7 +219,7 @@ class Vacancies_File():
                 with open(self.source_file_path, 'wt', encoding='utf-8') as file:
                     json.dump(vacancies, file, ensure_ascii=False)
 
-    def filter_vacancy_by_word(self,search_word):
+    def filter_vacancy_by_word(self,search_word) -> None:
         """ Метод получения списка вакансий из файла, соответствующий введенным критериям"""
 
         vacancies_found = []

@@ -10,6 +10,7 @@ def test_head_hunter_api():
     get_api = From_hh_api()
     get_api.get_vacancies('agile', 3)
 
+
     with open('data/hh_vacancies_raw.json', 'rt', encoding='utf-8') as file:
         vacancies = json.load(file)
 
