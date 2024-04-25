@@ -68,7 +68,7 @@ def menu_search_params(raw_file_path, source_file_path) -> None:
     vacancies_number = int(input('Введите количество вакансий в поиске: '))
 
     hh_api = From_hh_api()
-    hh_api.get_vacancies(search_word, vacancies_number)
+    hh_api.get_vacancies(search_word, vacancies_number,raw_file_path)
 
     file = Vacancies_File(raw_file_path, source_file_path)
     file.from_raw_file()

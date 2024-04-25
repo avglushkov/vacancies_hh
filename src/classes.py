@@ -18,7 +18,7 @@ class From_hh_api(Abs_APIVacancy):
     def __init__(self) -> None:
         self.api_url = 'https://api.hh.ru/vacancies'
 
-    def get_vacancies(self, search_text, vacancies_number) -> None:
+    def get_vacancies(self, search_text, vacancies_number, raw_file_path) -> None:
         """ метод позволяющий запрашивать записи с сайта hh, содержащие текст search_text и записывать его в файл в формате json """
 
         response = requests.get(self.api_url, params={'text': search_text, 'per_page': vacancies_number})
@@ -27,7 +27,7 @@ class From_hh_api(Abs_APIVacancy):
 
         vacancies = response.json()
 
-        with open('data/hh_vacancies_raw.json', 'wt', encoding='utf-8') as data_file:
+        with open(raw_file_path, 'wt', encoding='utf-8') as data_file:
             json.dump(vacancies['items'], data_file, ensure_ascii=False)
 
 
